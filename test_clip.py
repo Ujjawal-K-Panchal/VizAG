@@ -5,19 +5,18 @@ Date: May 27, 2024; 7:22 PM
 
 Author: Ujjawal K. Panchal & Ajinkya Chaudhari & Isha S. Joglekar
 """
-import os, requests
+import requests
 from PIL import Image
 from datasets import load_dataset
 from transformers import AutoProcessor, AutoModelForCausalLM
 
-checkpoint = "microsoft/git-base"
-modelstore = "./modelstore"
-device = "cuda:0"
-if not os.path.exists(modelstore):
-    os.makedirs(modelstore)
+import projconfig
 
-processor = AutoProcessor.from_pretrained(checkpoint, cache_dir = modelstore)
-model = AutoModelForCausalLM.from_pretrained(checkpoint, cache_dir = modelstore).to(device)
+checkpoint = "microsoft/git-base"
+device = "cuda:0"
+
+processor = AutoProcessor.from_pretrained(checkpoint, cache_dir = projconfig.modelstore)
+model = AutoModelForCausalLM.from_pretrained(checkpoint, cache_dir = projconfig.modelstore).to(device)
 
 def transforms(example_batch):
     images = [x for x in example_batch["image"]]
