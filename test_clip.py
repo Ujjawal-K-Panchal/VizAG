@@ -25,6 +25,20 @@ def transforms(example_batch):
     inputs.update({"labels": inputs["input_ids"]})
     return inputs
 
+def img2caption(img: Image | np.array, device: str = device, max_tokens: int = 100):
+    """
+    Desc:
+        Image to Caption.
+    Args:
+        1. `img`: Image.
+        2. `device`: device.
+        3. `max_tokens`: maximum number of tokens.
+    """
+    inputs = processor(images = image, return_tensors = "pt").to(device)
+    genids = model.generate(pixel_values = inputs.pixel_values, max_length = 100)
+    gencaps = processor.batch_decode(genids, skip_special_tokens = True)[0]
+    return gencaps
+
 if __name__ == "__main__":
     #1. evaluate.
     sample_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Ravivarmapress.jpg/800px-Ravivarmapress.jpg"

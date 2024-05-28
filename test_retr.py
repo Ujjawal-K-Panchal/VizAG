@@ -5,11 +5,12 @@ Date: May 27, 2024
 
 Author: Ujjawal K. Panchal & Ajinkya Chaudhari & Isha S. Joglekar
 """
+import torch
+from typing import Iterable
 from angle_emb import AnglE
 from sentence_transformers.util import cos_sim
 
 import projconfig
-
 
 model = AnglE.from_pretrained(
     "mixedbread-ai/mxbai-embed-2d-large-v1",
@@ -17,16 +18,33 @@ model = AnglE.from_pretrained(
     cache_dir = projconfig.modelstore
 ).cuda()
 
-# it is recommended to set layers from 20 to 24.
-layer_index = 22  # 1d: layer
-embedding_size = 768  # 2d: embedding size
+def find_topk_embs(
+    query: str,
+    docs: Iterable,
+    embs: Iterable,
+    k: int = 2,
+    layer_index: int = projconfig.layer_index,
+    embedding_size: int = projconfig.embedding_size,
+):
+    """
+    Desc:
+        Caption 2 Similarity.
+    """
+    q_emb = model.encode([query], layer_index = layer_index, embedding_size = embedding_size)[0]
+    sims = cos_sim(q_emb, embs)
+    top_k_indices = torch.argsort(-1*sims)[0]
+    return [docs[i] for i in top_k_indices.tolist()][:k]
 
 if __name__ == "__main__":
-    # 3. embeddings.
-    embeddings = model.encode([
+    #1. embeddings.
+    docs = [
         'Who is german and likes bread?',
-        'Everybody in Germany.'
-    ], layer_index=layer_index, embedding_size=embedding_size)
-    #4. embedding similarity.
-    similarities = cos_sim(embeddings[0], embeddings[1:])
-    print('similarities:', similarities)
+        'German breads are the best in the world!',
+        'French breads are better than German breads.',
+        'Everybody in Germany.',
+        'Dogs like bones.',
+    ]
+    embeddings = model.encode(docs, layer_index=projconfig.layer_index, embedding_size=projconfig.embedding_size)
+    #2. embedding similarity.
+    topdocs = find_topk_embs("Germany has good breads", docs, embeddings)
+    print(topdocs)
