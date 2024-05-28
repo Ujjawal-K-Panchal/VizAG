@@ -18,6 +18,11 @@ model = AnglE.from_pretrained(
     cache_dir = projconfig.modelstore
 ).cuda()
 
+
+def embed_strings(model, strings: str, layer_index: int = projconfig.layer_index, embedding_size: int = projconfig.embedding_size):
+    return model.encode(strings, layer_index = layer_index, embedding_size = embedding_size)
+
+
 def find_topk_embs(
     query: str,
     docs: Iterable,
@@ -30,10 +35,11 @@ def find_topk_embs(
     Desc:
         Caption 2 Similarity.
     """
-    q_emb = model.encode([query], layer_index = layer_index, embedding_size = embedding_size)[0]
+    q_emb = embed_strings(model, [query])[0]
     sims = cos_sim(q_emb, embs)
     top_k_indices = torch.argsort(-1*sims)[0]
     return [docs[i] for i in top_k_indices.tolist()][:k]
+
 
 if __name__ == "__main__":
     #1. embeddings.
@@ -44,7 +50,7 @@ if __name__ == "__main__":
         'Everybody in Germany.',
         'Dogs like bones.',
     ]
-    embeddings = model.encode(docs, layer_index=projconfig.layer_index, embedding_size=projconfig.embedding_size)
+    embeddings = embed_strings(model, docs)
     #2. embedding similarity.
     topdocs = find_topk_embs("Germany has good breads", docs, embeddings)
     print(topdocs)

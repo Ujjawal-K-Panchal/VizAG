@@ -5,7 +5,8 @@ Date: May 27, 2024; 7:22 PM
 
 Author: Ujjawal K. Panchal & Ajinkya Chaudhari & Isha S. Joglekar
 """
-import requests
+from typing import Union
+import requests, numpy as np, imageio.v2 as imageio
 from PIL import Image
 from datasets import load_dataset
 from transformers import AutoProcessor, AutoModelForCausalLM
@@ -25,7 +26,7 @@ def transforms(example_batch):
     inputs.update({"labels": inputs["input_ids"]})
     return inputs
 
-def img2caption(img: Image | np.array, device: str = device, max_tokens: int = 100):
+def img2caption(img: Union[Image, np.array], device: str = device, max_tokens: int = 100):
     """
     Desc:
         Image to Caption.
@@ -34,6 +35,7 @@ def img2caption(img: Image | np.array, device: str = device, max_tokens: int = 1
         2. `device`: device.
         3. `max_tokens`: maximum number of tokens.
     """
+    img = Image.fromarray(img) if isinstance(img, np.array) else img
     inputs = processor(images = image, return_tensors = "pt").to(device)
     genids = model.generate(pixel_values = inputs.pixel_values, max_length = 100)
     gencaps = processor.batch_decode(genids, skip_special_tokens = True)[0]
@@ -42,7 +44,7 @@ def img2caption(img: Image | np.array, device: str = device, max_tokens: int = 1
 if __name__ == "__main__":
     #1. evaluate.
     sample_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Ravivarmapress.jpg/800px-Ravivarmapress.jpg"
-    image = Image.open(requests.get(sample_url, stream=True).raw)
+    image = Image.fromarray(imageio.imread(sample_url))
     inputs = processor(images=image, return_tensors="pt").to(device)
     pixel_values = inputs.pixel_values
     generated_ids = model.generate(pixel_values=pixel_values, max_length=50)
