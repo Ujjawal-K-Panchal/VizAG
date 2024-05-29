@@ -13,12 +13,6 @@ from transformers import AutoProcessor, AutoModelForCausalLM
 
 import projconfig
 
-checkpoint = "microsoft/git-base"
-device = "cuda:0"
-
-processor = AutoProcessor.from_pretrained(checkpoint, cache_dir = projconfig.modelstore)
-model = AutoModelForCausalLM.from_pretrained(checkpoint, cache_dir = projconfig.modelstore).to(device)
-
 def transforms(example_batch):
     images = [x for x in example_batch["image"]]
     captions = [x for x in example_batch["text"]]
@@ -26,7 +20,7 @@ def transforms(example_batch):
     inputs.update({"labels": inputs["input_ids"]})
     return inputs
 
-def img2caption(img: Union[Image, np.array], device: str = device, max_tokens: int = 100):
+def img2cap(processor, model, img: Union[Image, np.array], device: str = projconfig.device, max_tokens: int = 100):
     """
     Desc:
         Image to Caption.
@@ -35,18 +29,18 @@ def img2caption(img: Union[Image, np.array], device: str = device, max_tokens: i
         2. `device`: device.
         3. `max_tokens`: maximum number of tokens.
     """
-    img = Image.fromarray(img) if isinstance(img, np.array) else img
+    img = Image.fromarray(img) if isinstance(img, np.ndarray) else img
     inputs = processor(images = image, return_tensors = "pt").to(device)
     genids = model.generate(pixel_values = inputs.pixel_values, max_length = 100)
-    gencaps = processor.batch_decode(genids, skip_special_tokens = True)[0]
-    return gencaps
+    gencap = processor.batch_decode(genids, skip_special_tokens = True)[0]
+    return gencap
 
 if __name__ == "__main__":
-    #1. evaluate.
+    #1. load model.
+    processor = AutoProcessor.from_pretrained(projconfig.clip_model_name, cache_dir = projconfig.modelstore)
+    model = AutoModelForCausalLM.from_pretrained(projconfig.clip_model_name, cache_dir = projconfig.modelstore).to(projconfig.device)
+    #2. caption the image.
     sample_url = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Ravivarmapress.jpg/800px-Ravivarmapress.jpg"
-    image = Image.fromarray(imageio.imread(sample_url))
-    inputs = processor(images=image, return_tensors="pt").to(device)
-    pixel_values = inputs.pixel_values
-    generated_ids = model.generate(pixel_values=pixel_values, max_length=50)
-    generated_caption = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    print(generated_caption)
+    image = imageio.imread(sample_url)
+    gencap = img2cap(processor, model, image, projconfig.device, 100)
+    print(gencap)
