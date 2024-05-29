@@ -5,6 +5,7 @@ Date: May 28, 2024; 4:47 PM
 
 Author: Ujjawal K. Panchal & Ajinkya Chaudhari & Isha S. Joglekar
 """
+import warnings
 from typing import Optional
 
 import torch
@@ -13,19 +14,20 @@ import peft
 
 import projconfig
 
+warnings.filterwarnings('ignore')
+
 def get_tokenizer(
 	name: str = projconfig.llm_name,
-	model_max_length: int = projconfig.max_seq_len
+	max_seq_len: int = projconfig.max_seq_len
 ):
 	tok = AutoTokenizer.from_pretrained(
 		name,
 		cache_dir = projconfig.modelstore,
-		model_max_length = model_max_length,
+		model_max_length = max_seq_len,
 		token = projconfig.hf_token,
 		quantization_config = projconfig.nf4_config
 	)
 	tok.padding_side = 'right'
-	tok.model_max_length = max_seq_len
 	tok.pad_token = tok.eos_token
 	return tok
 
@@ -56,10 +58,10 @@ def get_model(
 
 def get_reply(model: AutoModelForCausalLM, tok: AutoTokenizer, msg: str):
 	#1. format message.
-	msg = {"role": "user", "content": msg}
+	msgdict = [{"role": "user", "content": msg}]
 	#2. tokenize message.
-	input_ids = tokenizer.apply_chat_template(
-		msg,
+	input_ids = tok.apply_chat_template(
+		msgdict,
 		add_generation_prompt=True,
 		return_tensors="pt"
 	).to(model.device)
@@ -72,11 +74,11 @@ def get_reply(model: AutoModelForCausalLM, tok: AutoTokenizer, msg: str):
 		temperature=projconfig.temperature,
 		top_p=projconfig.top_p,
 	)
-	reply = tokenizer.decode(outputs[0][input_ids.shape[-1]:], skip_special_tokens=True)
+	reply = tok.decode(outputs[0][input_ids.shape[-1]:], skip_special_tokens=True)
 	return reply
 
 if __name__ == "__main__":
 	#1. get model & tokenizer.
 	model, tok = get_model(), get_tokenizer()
 	#2. get reply for a message.
-	print(get_reply("Warren E. Buffett rocks!"))
+	print(get_reply(model, tok, "Warren E. Buffett rocks!"))

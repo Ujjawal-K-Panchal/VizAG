@@ -14,5 +14,5 @@
 # Run tests.
 1. Test Image Captioning: `python baseclip.py` (Image to String).
 2. Test Retrieval: `python retrieval.py` (Search docs similar to user query.)
-3. Test Generation: `python generation.py` (Test Generation; note need `~6 GB GPU VRAM`). #TODO: Test it.
+3. Test Generation: `python generation.py` (Test Generation; note need `~6 GB GPU VRAM`).
 4. Test ViZAG: `python vizag.py` #TODO: Build the test. 
