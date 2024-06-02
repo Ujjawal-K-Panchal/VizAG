@@ -3,3 +3,4 @@ modelstore
 secrets
 venv*/
 longclip/checkpoints/*
+Flickr8k_Dataset

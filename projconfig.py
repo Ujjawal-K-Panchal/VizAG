@@ -6,13 +6,15 @@ Date: May 27, 2024; 7:22 PM
 Author: Ujjawal K. Panchal & Ajinkya Chaudhari & Isha S. Joglekar
 """
 import os
+from pathlib import Path
 import torch
 import transformers, peft
 
 #Important paths.
 secrets = "./secrets"
 modelstore = "./modelstore"
-device = "cuda:0"
+
+flikr8k = Path(modelstore) / "vizag-flikr8k"
 
 if not os.path.exists(modelstore):
     os.makedirs(modelstore)
@@ -26,17 +28,22 @@ with open(secrets + "/hf_token", "rt") as tokenfile:
 clip_model_name = "microsoft/git-base"
 
 #RAG config.
+batchsize = 128
+k = 2
+device = "cuda:0"
+db_device = "cuda:1"
 ##Embedder config.
 ###it is recommended to set layers from 20 to 24.
 emb_model_name = "mixedbread-ai/mxbai-embed-2d-large-v1"
 layer_index = 22  # 1d: layer
 embedding_size = 768  # 2d: embedding size
 emb_pooling_strategy = "cls"
-k = 2
+
 
 #Generator config.
 llm_name = "meta-llama/Meta-Llama-3-8B-Instruct"
-max_seq_len = 100
+qtype = "qlora"
+max_seq_len = 200
 do_sample=True
 temperature=0.6
 top_p=0.9

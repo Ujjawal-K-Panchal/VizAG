@@ -5,6 +5,8 @@ Date: May 27, 2024
 
 Author: Ujjawal K. Panchal & Ajinkya Chaudhari & Isha S. Joglekar
 """
+from typing import Union, List
+
 import torch
 import torch.nn as nn
 from typing import Iterable
@@ -16,7 +18,7 @@ import projconfig
 
 def embed_strings(
     model,
-    strings: str,
+    strings: Union[str, List[str]],
     layer_index: int = projconfig.layer_index,
     embedding_size: int = projconfig.embedding_size,
     device = None
