@@ -5,20 +5,24 @@ Date: May 27, 2024
 
 Author: Ujjawal K. Panchal & Ajinkya Chaudhari & Isha S. Joglekar
 """
-import os, imageio
+import warnings
+
+import argparse, os, imageio
+from typing import Callable, Optional
 from pathlib import Path
 from PIL import Image
 
 import torch
 import torch.nn as nn
+import torchvision.transforms as transforms
 from tqdm import tqdm
 
 import projconfig
-import baseclip, retrieval, generation
+import baseclip, sforceclip #clip models.
+import retrieval, generation
 
 
-import torchvision.transforms as transforms
-
+warnings.filterwarnings('ignore')
 
 class VizAG(nn.Module):
     kernel_prompt = """
@@ -61,6 +65,9 @@ class VizAG(nn.Module):
         gen_model, k: int = projconfig.k,
         bs: int = projconfig.batchsize,
         db_device: str | torch.device = projconfig.db_device,
+        img2cap: Callable = baseclip.img2cap, #defaulting to CLIP's img2cap.
+        img2capkwargs: Optional[dict] = None,
+
     ):
         super().__init__()
         self.images = images
@@ -74,6 +81,8 @@ class VizAG(nn.Module):
         self.docs = []
         self.docembs = []
         self.db_device = db_device
+        self.img2cap = img2cap
+        self.img2capkwargs = img2capkwargs
         return
     
     def save_snapshot(self, shotpath: Path | str):
@@ -104,11 +113,12 @@ class VizAG(nn.Module):
         with tqdm(range(0, len(self.images), self.bs), unit = "batches") as batchiter:
             for i in batchiter:
                 #1. caption image batch.
-                cap = baseclip.img2cap(
-                        self.clipproc,
-                        self.clipmodel,
-                        self.images[i:i + self.bs], #`self.bs` number of images captioned at once.
-                        device = self.clipmodel.device
+                cap = self.img2cap(
+                        processor = self.clipproc,
+                        model = self.clipmodel,
+                        img = self.images[i:i + self.bs], #`self.bs` number of images captioned at once.
+                        device = self.clipmodel.device,
+                        **self.img2capkwargs #extra keyword arguments depending on model.
                 )
                 #2. embed caption batch and store in db device.
                 capembs = retrieval.embed_strings(
@@ -180,17 +190,27 @@ class VizAG(nn.Module):
             combined_augmented_query =  VizAG.kernel_combine_prompt.format(docs = combined_interim_strings, query = query)
             #5. return final message.
             finalmsg = generation.get_reply(self.gen_model, self.gen_tok, combined_augmented_query)
-        return finalmsg, combined_augmented_query
+        return finalmsg
 
 
 
 if __name__ == "__main__":
+    #0. Get Args.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', default = 'base', type = str)
+
+    args = parser.parse_args()
     #1. Extra imports.
     from transformers import AutoProcessor, AutoModelForCausalLM
     from angle_emb import AnglE
     #2. get clip stuff.
-    clipproc = AutoProcessor.from_pretrained(projconfig.clip_model_name, cache_dir = projconfig.modelstore)
-    clipmodel = AutoModelForCausalLM.from_pretrained(projconfig.clip_model_name, cache_dir = projconfig.modelstore).to(projconfig.device)
+    if args.model == 'base':
+        clipproc = AutoProcessor.from_pretrained(projconfig.clip_model_name, cache_dir = projconfig.modelstore)
+        clipmodel = AutoModelForCausalLM.from_pretrained(projconfig.clip_model_name, cache_dir = projconfig.modelstore).to(projconfig.device)
+    elif args.model == 'sforce':
+        clipmodel, clipproc = sforceclip.get_sforce_clip()
+    else:
+        exit("Bye!")
     print("CLIP loaded.")
     #3. get retriever.
     retriever = AnglE.from_pretrained(
@@ -221,18 +241,16 @@ if __name__ == "__main__":
         img_path = os.path.join('/nfs_share2/ujjawal/VizAG/Flickr8k_Dataset/Flicker8k_Dataset', filename)
         img = Image.fromarray(imageio.imread(img_path))
         resized_image = transform(img)
-
-        # print(img)
         images.append(resized_image)
-    # print(len(images))
-    # images = [Image.fromarray(imageio.imread(url)) for url in images]
-    #6. make vizag.
+
+    #6. make CLIP Vizag.
     vizag = VizAG(
         images, #images.
         clipproc, clipmodel, #clip stuff.
         retriever, #retriever.
         gen_tok, gen_model, #generator.
         k = len(image_files),
+        img2cap = baseclip.img2cap
     )
     if os.path.exists(projconfig.flikr8k):
         vizag.setup_snapshot(projconfig.flikr8k)
@@ -241,6 +259,6 @@ if __name__ == "__main__":
         vizag.save_snapshot(projconfig.flikr8k) #save snapshot. Setup takes 6+ minutes man! :'(
 
     #7. Iterative + combine to generate final answer.
-    reply, interim_string = vizag.generate_iterative("How many tables are present in the data?")
-    print(f"{interim_string=}\n\n{reply=}")
+    reply = vizag.generate_iterative("How many tables are present in the data?")
+    print(f"{reply}")
     
