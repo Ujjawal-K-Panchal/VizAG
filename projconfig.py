@@ -27,6 +27,15 @@ with open(secrets + "/hf_token", "rt") as tokenfile:
 #CLIP config.
 clip_model_name = "microsoft/git-base"
 
+#Salesforce CLIP config.
+sforceclip_model_name = "Salesforce/blip-image-captioning-large"
+
+#Flamingo config.
+flamingo_model_name = "luodian/openflamingo-9b-hf" #"openflamingo/OpenFlamingo-9B-vitl-mpt7b"
+flamingo_cpoint = "openflamingo-9b-hf.pt"
+
+KFLAMINGOCAPTIONCMD = "Provide a detailed description of the given image."
+
 #RAG config.
 batchsize = 128
 k = 2
@@ -45,7 +54,7 @@ llm_name = "meta-llama/Meta-Llama-3-8B-Instruct"
 qtype = "qlora"
 max_seq_len = 200
 do_sample=True
-temperature=0.6
+temperature=0.1
 top_p=0.9
 ##QLoRA Quantization config.
 nf4_config = transformers.BitsAndBytesConfig(
