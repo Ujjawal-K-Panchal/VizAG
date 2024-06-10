@@ -1,5 +1,6 @@
 # VizAG: Vision Augmented Generation
-![Untitled presentation](https://github.com/Ujjawal-K-Panchal/VizAG/assets/31011628/0baa1052-eaa8-43ef-a4e4-b0d7777dae24)
+<a href = "https://drive.google.com/file/d/1FuJIFqK3hxGMVM90KvImHjLJkihvI4TM/view?usp=sharing">![Untitled presentation-2](https://github.com/Ujjawal-K-Panchal/VizAG/assets/31011628/94ed31da-3932-422d-bd2c-4e4f55d9984b)
+</a>
 
 # Setup
 1. Make & activate venv:
