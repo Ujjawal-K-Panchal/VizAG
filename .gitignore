@@ -4,3 +4,4 @@ secrets
 venv*/
 longclip/checkpoints/*
 Flickr8k_Dataset
+caltech-101/

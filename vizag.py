@@ -198,6 +198,7 @@ if __name__ == "__main__":
     #0. Get Args.
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', default = 'base', type = str)
+    parser.add_argument('--data', default = 'flikr', type = str)
 
     args = parser.parse_args()
     #1. Extra imports.
@@ -225,23 +226,32 @@ if __name__ == "__main__":
     print("Generator loaded.")
     #5. images.
 
-    # images = [
-    #     "https://static.toiimg.com/photo/msid-61220500,width-96,height-65.cms",
-    #     "https://lp-cms-production.imgix.net/2021-01/GettyRF_450207051.jpg",
-    #     "https://cdn.britannica.com/74/114874-050-6E04C88C/North-Face-Mount-Everest-Tibet-Autonomous-Region.jpg",
-    #     "https://i.natgeofe.com/n/28fd84d5-ebb6-45c8-a758-17d0089a0464/TT_report_ST0058057copy-Enhanced_HR_4x3.jpg",
-    #     "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Swiss_Alps.jpg/1200px-Swiss_Alps.jpg"
-    # ]
-    transform = transforms.Resize((256,256))
-    
-    # Apply the transformation
-    image_files = [f for f in os.listdir('/nfs_share2/ujjawal/VizAG/Flickr8k_Dataset/Flicker8k_Dataset')]
     images = []
+    image_files =[]
+    # transform = transforms.Resize((256,256))
+
+    if args.data == 'flikr':
+        root='/nfs_share2/ujjawal/VizAG/Flickr8k_Dataset/Flicker8k_Dataset/'
+        for f in os.listdir('/nfs_share2/ujjawal/VizAG/Flickr8k_Dataset/Flicker8k_Dataset/'):
+            file_path = os.path.join(root, f)
+            image_files.append(file_path)
+    
+    elif args.data == 'caltech':
+        base_folder = '/nfs_share2/ujjawal/VizAG/caltech-101/'
+        for root, dirs, files in os.walk(base_folder):
+            for file in files:
+                if file.endswith('.jpg'):
+                    file_path = os.path.join(root, file)
+                    image_files.append(file_path)
+                    
+        
+    # Apply the transformation
     for filename in image_files:
-        img_path = os.path.join('/nfs_share2/ujjawal/VizAG/Flickr8k_Dataset/Flicker8k_Dataset', filename)
-        img = Image.fromarray(imageio.imread(img_path))
-        resized_image = transform(img)
-        images.append(resized_image)
+        # img_path = os.path.join(image_files, filename)
+        img = Image.fromarray(imageio.imread(filename))
+        # resized_image = transform(img)
+        images.append(img)
+        # print(len(images))
 
     #6. make CLIP Vizag.
     vizag = VizAG(
@@ -259,6 +269,6 @@ if __name__ == "__main__":
         vizag.save_snapshot(projconfig.flikr8k) #save snapshot. Setup takes 6+ minutes man! :'(
 
     #7. Iterative + combine to generate final answer.
-    reply = vizag.generate_iterative("How many tables are present in the data?")
+    reply = vizag.generate_iterative("What is the most common colour of dogs?")
     print(f"{reply}")
     

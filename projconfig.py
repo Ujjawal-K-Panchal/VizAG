@@ -30,11 +30,7 @@ clip_model_name = "microsoft/git-base"
 #Salesforce CLIP config.
 sforceclip_model_name = "Salesforce/blip-image-captioning-large"
 
-#Flamingo config.
-flamingo_model_name = "luodian/openflamingo-9b-hf" #"openflamingo/OpenFlamingo-9B-vitl-mpt7b"
-flamingo_cpoint = "openflamingo-9b-hf.pt"
 
-KFLAMINGOCAPTIONCMD = "Provide a detailed description of the given image."
 
 #RAG config.
 batchsize = 128
@@ -52,7 +48,7 @@ emb_pooling_strategy = "cls"
 #Generator config.
 llm_name = "meta-llama/Meta-Llama-3-8B-Instruct"
 qtype = "qlora"
-max_seq_len = 200
+max_seq_len = 800
 do_sample=True
 temperature=0.1
 top_p=0.9
