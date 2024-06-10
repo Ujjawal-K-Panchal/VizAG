@@ -1,4 +1,5 @@
-# VizAG: Vizion Augmented Generation
+# VizAG: Vision Augmented Generation
+![Untitled presentation](https://github.com/Ujjawal-K-Panchal/VizAG/assets/31011628/0baa1052-eaa8-43ef-a4e4-b0d7777dae24)
 
 # Setup
 1. Make & activate venv:
@@ -15,4 +16,4 @@
 1. Test Image Captioning: `python baseclip.py` (Image to String).
 2. Test Retrieval: `python retrieval.py` (Search docs similar to user query.)
 3. Test Generation: `python generation.py` (Test Generation; note need `~6 GB GPU VRAM`).
-4. Test ViZAG: `python vizag.py` #TODO: Build the test. 
+4. Test ViZAG: `python vizag.py`
